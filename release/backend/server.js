@@ -45,6 +45,14 @@ initDatabase()
 
 // Migration: Move files from legacy ./music to MUSIC_STORAGE_PATH
 const legacyMusicPath = path.join(__dirname, 'music')
+console.log('--- MIGRATION DEBUG ---')
+console.log('__dirname:', __dirname)
+console.log('legacyMusicPath:', legacyMusicPath)
+console.log('MUSIC_STORAGE_PATH:', path.resolve(MUSIC_STORAGE_PATH))
+console.log('Exists legacy?', fs.existsSync(legacyMusicPath))
+console.log('Are paths different?', legacyMusicPath !== path.resolve(MUSIC_STORAGE_PATH))
+console.log('-----------------------')
+
 if (fs.existsSync(legacyMusicPath) && legacyMusicPath !== path.resolve(MUSIC_STORAGE_PATH)) {
   console.log('Checking for legacy music files...')
   try {
@@ -58,21 +66,27 @@ if (fs.existsSync(legacyMusicPath) && legacyMusicPath !== path.resolve(MUSIC_STO
       // Only move files, and only if they don't exist in destination
       if (fs.lstatSync(srcPath).isFile() && !fs.existsSync(destPath)) {
         try {
-          // Try to copy first (safer across partitions/permissions)
-          fs.copyFileSync(srcPath, destPath)
-          console.log(`Migrated (copy): ${file}`)
+          fs.renameSync(srcPath, destPath)
+          console.log(`Migrated: ${file}`)
           movedCount++
-
-          // Try to delete original, but ignore error if permission denied (Program Files)
-          try {
-            fs.unlinkSync(srcPath)
-          } catch (unlinkErr) {
-            console.warn(
-              `Could not delete legacy file ${file} (permission denied), but it was copied successfully.`
-            )
-          }
         } catch (err) {
-          console.error(`Failed to migrate ${file}:`, err)
+          // Fallback to copy+unlink if rename fails (e.g. across drives)
+          try {
+            fs.copyFileSync(srcPath, destPath)
+            console.log(`Migrated (copy): ${file}`)
+            movedCount++
+
+            // Try to delete original, but ignore error if permission denied
+            try {
+              fs.unlinkSync(srcPath)
+            } catch (unlinkErr) {
+              console.warn(
+                `Could not delete legacy file ${file} (permission denied), but it was copied successfully.`
+              )
+            }
+          } catch (e) {
+            console.error(`Failed to migrate ${file}:`, e)
+          }
         }
       }
     })
