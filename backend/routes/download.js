@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { parseFile } from 'music-metadata'
+import { MUSIC_PATH } from '../config/paths.js'
 import db from '../config/database.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -45,14 +46,14 @@ async function extractMetadata(filePath) {
     return {
       title: metadata.common.title || path.basename(filePath, '.mp3'),
       artist: metadata.common.artist || 'Unknown Artist',
-      duration: metadata.format.duration || 0
+      duration: metadata.format.duration || 0,
     }
   } catch (error) {
     console.warn('Could not extract metadata:', error.message)
     return {
       title: path.basename(filePath, '.mp3'),
       artist: 'Unknown Artist',
-      duration: 0
+      duration: 0,
     }
   }
 }
@@ -81,18 +82,19 @@ router.post('/dropbox-file', async (req, res) => {
       url: directUrl,
       responseType: 'stream',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: '*/*',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
-        'Upgrade-Insecure-Requests': '1'
+        'Upgrade-Insecure-Requests': '1',
       },
       timeout: 60000,
-      maxRedirects: 5
+      maxRedirects: 5,
     })
 
     const writer = fs.createWriteStream(destPath)
@@ -110,10 +112,12 @@ router.post('/dropbox-file', async (req, res) => {
     const trackTitle = title || metadata.title
     const trackArtist = artist || metadata.artist
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO tracks (id, title, artist, type, src, duration, file_path, file_size)
       VALUES (?, ?, ?, 'local', ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       trackId,
       trackTitle,
       trackArtist,
@@ -129,13 +133,13 @@ router.post('/dropbox-file', async (req, res) => {
 
     res.json({
       success: true,
-      track
+      track,
     })
   } catch (error) {
     console.error('Error downloading file:', error)
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     })
   }
 })

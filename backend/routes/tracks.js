@@ -7,7 +7,9 @@ const router = express.Router()
 // Get all tracks (active only)
 router.get('/', (req, res) => {
   try {
-    const tracks = db.prepare('SELECT * FROM tracks WHERE deleted_at IS NULL ORDER BY created_at DESC').all()
+    const tracks = db
+      .prepare('SELECT * FROM tracks WHERE deleted_at IS NULL ORDER BY created_at DESC')
+      .all()
     res.json(tracks)
   } catch (error) {
     console.error('Error fetching tracks:', error)
@@ -18,7 +20,9 @@ router.get('/', (req, res) => {
 // Get trash tracks
 router.get('/trash/all', (req, res) => {
   try {
-    const tracks = db.prepare('SELECT * FROM tracks WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC').all()
+    const tracks = db
+      .prepare('SELECT * FROM tracks WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC')
+      .all()
     res.json(tracks)
   } catch (error) {
     console.error('Error fetching trash:', error)
@@ -31,11 +35,11 @@ router.post('/trash/:id/restore', (req, res) => {
   try {
     const stmt = db.prepare('UPDATE tracks SET deleted_at = NULL WHERE id = ?')
     const result = stmt.run(req.params.id)
-    
+
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Track not found' })
     }
-    
+
     res.json({ message: 'Track restored successfully' })
   } catch (error) {
     console.error('Error restoring track:', error)
@@ -48,7 +52,7 @@ router.delete('/trash/:id', (req, res) => {
   try {
     // Get file path first to delete physical file
     const track = db.prepare('SELECT file_path FROM tracks WHERE id = ?').get(req.params.id)
-    
+
     if (track && track.file_path) {
       try {
         if (fs.existsSync(track.file_path)) {
@@ -77,17 +81,17 @@ router.delete('/trash/:id', (req, res) => {
 router.delete('/trash/cleanup/all', (req, res) => {
   try {
     const { olderThan30Days } = req.body
-    
+
     let query = 'SELECT id, file_path FROM tracks WHERE deleted_at IS NOT NULL'
     if (olderThan30Days) {
       query += " AND deleted_at < datetime('now', '-30 days')"
     }
-    
+
     const tracksToDelete = db.prepare(query).all()
-    
+
     // Delete physical files
     let deletedCount = 0
-    
+
     for (const track of tracksToDelete) {
       if (track.file_path && fs.existsSync(track.file_path)) {
         try {
@@ -97,18 +101,18 @@ router.delete('/trash/cleanup/all', (req, res) => {
         }
       }
     }
-    
+
     // Delete from DB
     let deleteQuery = 'DELETE FROM tracks WHERE deleted_at IS NOT NULL'
     if (olderThan30Days) {
       deleteQuery += " AND deleted_at < datetime('now', '-30 days')"
     }
-    
+
     const result = db.prepare(deleteQuery).run()
-    
-    res.json({ 
-      message: 'Cleanup completed', 
-      deletedCount: result.changes 
+
+    res.json({
+      message: 'Cleanup completed',
+      deletedCount: result.changes,
     })
   } catch (error) {
     console.error('Error cleaning trash:', error)
@@ -119,7 +123,9 @@ router.delete('/trash/cleanup/all', (req, res) => {
 // Soft delete all tracks (Clear Playlist)
 router.delete('/all/soft', (req, res) => {
   try {
-    const stmt = db.prepare('UPDATE tracks SET deleted_at = CURRENT_TIMESTAMP WHERE deleted_at IS NULL')
+    const stmt = db.prepare(
+      'UPDATE tracks SET deleted_at = CURRENT_TIMESTAMP WHERE deleted_at IS NULL'
+    )
     const result = stmt.run()
     res.json({ message: 'All tracks moved to trash', count: result.changes })
   } catch (error) {
@@ -156,7 +162,17 @@ router.post('/', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
-    stmt.run(id, title, artist || 'Unknown Artist', type, src, cover, duration, file_path, file_size)
+    stmt.run(
+      id,
+      title,
+      artist || 'Unknown Artist',
+      type,
+      src,
+      cover,
+      duration,
+      file_path,
+      file_size
+    )
 
     const newTrack = db.prepare('SELECT * FROM tracks WHERE id = ?').get(id)
     res.status(201).json(newTrack)
@@ -185,7 +201,17 @@ router.put('/:id', (req, res) => {
       WHERE id = ?
     `)
 
-    const result = stmt.run(title, artist, type, src, cover, duration, file_path, file_size, req.params.id)
+    const result = stmt.run(
+      title,
+      artist,
+      type,
+      src,
+      cover,
+      duration,
+      file_path,
+      file_size,
+      req.params.id
+    )
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Track not found' })
@@ -219,7 +245,7 @@ router.delete('/:id', (req, res) => {
 // Scan local folder for orphaned files
 router.post('/scan-local', async (req, res) => {
   try {
-    const musicPath = process.env.MUSIC_STORAGE_PATH || './music'
+    const musicPath = process.env.MUSIC_STORAGE_PATH || MUSIC_PATH
     const fs = await import('fs')
     const path = await import('path')
     const { parseFile } = await import('music-metadata')
@@ -230,16 +256,18 @@ router.post('/scan-local', async (req, res) => {
 
     const files = fs.readdirSync(musicPath)
     const mp3Files = files.filter(f => f.toLowerCase().endsWith('.mp3'))
-    
+
     // Get existing file paths from DB (including deleted ones to avoid duplicates if they are just in trash)
     const existingTracks = db.prepare('SELECT file_path FROM tracks').all()
-    const existingPaths = new Set(existingTracks.map(t => t.file_path ? path.resolve(t.file_path) : null))
+    const existingPaths = new Set(
+      existingTracks.map(t => (t.file_path ? path.resolve(t.file_path) : null))
+    )
 
     let addedCount = 0
 
     for (const file of mp3Files) {
       const fullPath = path.resolve(musicPath, file)
-      
+
       if (!existingPaths.has(fullPath)) {
         // Found orphaned file
         try {
@@ -247,10 +275,12 @@ router.post('/scan-local', async (req, res) => {
           const trackId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
           const stats = fs.statSync(fullPath)
 
-          db.prepare(`
+          db.prepare(
+            `
             INSERT INTO tracks (id, title, artist, type, src, cover, duration, file_path, file_size)
             VALUES (?, ?, ?, 'local', ?, ?, ?, ?, ?)
-          `).run(
+          `
+          ).run(
             trackId,
             metadata.common.title || path.basename(file, '.mp3'),
             metadata.common.artist || 'Unknown Artist',
@@ -267,10 +297,10 @@ router.post('/scan-local', async (req, res) => {
       }
     }
 
-    res.json({ 
-      success: true, 
-      added: addedCount, 
-      message: `Scanned local folder. Recovered ${addedCount} orphaned tracks.` 
+    res.json({
+      success: true,
+      added: addedCount,
+      message: `Scanned local folder. Recovered ${addedCount} orphaned tracks.`,
     })
   } catch (error) {
     console.error('Error scanning local folder:', error)
