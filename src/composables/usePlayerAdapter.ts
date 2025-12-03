@@ -235,7 +235,9 @@ export function usePlayerAdapter() {
         if (audioElement.value) {
           const apiBaseUrl =
             import.meta.env.VITE_API_URL ||
-            (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api')
+            (import.meta.env.DEV || window.location.hostname === 'localhost'
+              ? 'http://localhost:3001/api'
+              : '/api')
           const backendBaseUrl = apiBaseUrl.replace('/api', '')
           const audioSrc =
             track.type === 'local' && track.src.startsWith('/music/')

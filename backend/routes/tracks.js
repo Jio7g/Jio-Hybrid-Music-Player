@@ -8,7 +8,7 @@ const router = express.Router()
 router.get('/', (req, res) => {
   try {
     const tracks = db
-      .prepare('SELECT * FROM tracks WHERE deleted_at IS NULL ORDER BY created_at DESC')
+      .prepare('SELECT * FROM tracks WHERE deleted_at IS NULL ORDER BY title ASC')
       .all()
     res.json(tracks)
   } catch (error) {
