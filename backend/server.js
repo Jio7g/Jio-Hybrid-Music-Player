@@ -96,8 +96,10 @@ app.use('/api/download', downloadRouter)
 app.use('/music', express.static(path.resolve(MUSIC_STORAGE_PATH)))
 
 // Servir frontend estático en producción
+// Servir frontend estático si existe la carpeta dist (Producción o Standalone)
 const distPath = path.join(__dirname, '..', 'dist')
-if (process.env.NODE_ENV === 'production') {
+if (fs.existsSync(distPath)) {
+  console.log('Serving static frontend from:', distPath)
   app.use(express.static(distPath))
   app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'))
