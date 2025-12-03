@@ -98,12 +98,20 @@ export function usePlaybackScheduler() {
           () => store.isLoading,
           (loading, prevLoading) => {
             if (!loading && prevLoading) {
-              console.log('Scheduler: Track loaded, starting playback')
-              adapter.play().catch(e => {
-                console.error('Scheduler: Autoplay failed', e)
-                // If autoplay fails (e.g. browser policy), we can't force it.
-                // But at least we know why.
-              })
+              setTimeout(() => {
+                adapter.play().catch(e => {
+                  if (e.name === 'NotAllowedError') {
+                    // Add a one-time click listener to resume playback on any interaction
+                    const resumeOnInteraction = () => {
+                      adapter.play()
+                      document.removeEventListener('click', resumeOnInteraction)
+                      document.removeEventListener('keydown', resumeOnInteraction)
+                    }
+                    document.addEventListener('click', resumeOnInteraction)
+                    document.addEventListener('keydown', resumeOnInteraction)
+                  }
+                })
+              }, 150)
 
               // Restore time if > 0
               if (store.currentTime > 0) {

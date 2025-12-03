@@ -2,12 +2,16 @@ import { ref, watch, onUnmounted } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 import type { Track, PlayerAdapter } from '@/types'
 
+let youtubeInterval: number | null = null
+
+// Singleton state
+const audioElement = ref<HTMLAudioElement | null>(null)
+const youtubePlayer = ref<YT.Player | null>(null)
+const currentAdapter = ref<'mp3' | 'youtube' | null>(null)
+const isYouTubeApiReady = ref(false)
+
 export function usePlayerAdapter() {
   const store = usePlayerStore()
-  const audioElement = ref<HTMLAudioElement | null>(null)
-  const youtubePlayer = ref<YT.Player | null>(null)
-  const currentAdapter = ref<'mp3' | 'youtube' | null>(null)
-  const isYouTubeApiReady = ref(false)
 
   // Load YouTube IFrame API
   function loadYouTubeAPI(): Promise<void> {
@@ -44,6 +48,10 @@ export function usePlayerAdapter() {
         store.setLoading(false)
       })
 
+      audioElement.value.addEventListener('canplaythrough', () => {
+        store.setLoading(false)
+      })
+
       audioElement.value.addEventListener('timeupdate', () => {
         store.setCurrentTime(audioElement.value?.currentTime || 0)
       })
@@ -55,6 +63,19 @@ export function usePlayerAdapter() {
       audioElement.value.addEventListener('play', () => {
         store.setPlaying(true)
       })
+      // ...
+      async function play(): Promise<void> {
+        try {
+          if (currentAdapter.value === 'mp3' && audioElement.value) {
+            await audioElement.value.play()
+          } else if (currentAdapter.value === 'youtube' && youtubePlayer.value) {
+            youtubePlayer.value.playVideo()
+          }
+        } catch (error) {
+          console.error('Error playing track:', error)
+          throw error // Re-throw to let caller handle it
+        }
+      }
 
       audioElement.value.addEventListener('pause', () => {
         store.setPlaying(false)
@@ -157,7 +178,6 @@ export function usePlayerAdapter() {
   }
 
   // YouTube time updater
-  let youtubeInterval: number | null = null
   function startYouTubeTimeUpdater() {
     if (youtubeInterval) clearInterval(youtubeInterval)
     youtubeInterval = window.setInterval(() => {
