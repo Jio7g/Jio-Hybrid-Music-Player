@@ -64,18 +64,6 @@ export function usePlayerAdapter() {
         store.setPlaying(true)
       })
       // ...
-      async function play(): Promise<void> {
-        try {
-          if (currentAdapter.value === 'mp3' && audioElement.value) {
-            await audioElement.value.play()
-          } else if (currentAdapter.value === 'youtube' && youtubePlayer.value) {
-            youtubePlayer.value.playVideo()
-          }
-        } catch (error) {
-          console.error('Error playing track:', error)
-          throw error // Re-throw to let caller handle it
-        }
-      }
 
       audioElement.value.addEventListener('pause', () => {
         store.setPlaying(false)

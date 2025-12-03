@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 
-const props = defineProps<{
+defineProps<{
   isOpen: boolean
 }>()
 
