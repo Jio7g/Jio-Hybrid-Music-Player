@@ -38,6 +38,7 @@ const filesToCopy = [
   'install-service.js',
   'uninstall-service.js',
   '.env.example',
+  'paths.js',
 ]
 const dirsToCopy = ['config', 'routes', 'services']
 
@@ -53,8 +54,8 @@ dirsToCopy.forEach(dir => {
   }
 })
 
-// Create empty folders
-;['music', 'temp'].forEach(dir => {
+// Create empty folders (only temp is needed locally, music is now in ProgramData)
+;['temp'].forEach(dir => {
   if (!fs.existsSync(path.join(backendDest, dir))) {
     fs.mkdirSync(path.join(backendDest, dir))
   }
@@ -163,6 +164,9 @@ Section "Install"
   ; Create Uninstaller
   WriteUninstaller "$INSTDIR\\Uninstall.exe"
   
+  ; Create Desktop Shortcut
+  CreateShortCut "$DESKTOP\\Hybrid Music Player.lnk" "http://localhost:3001" "" "$INSTDIR\\dist\\favicon.ico" 0
+  
 SectionEnd
 
 Section "Uninstall"
@@ -171,6 +175,9 @@ Section "Uninstall"
   
   ; Remove firewall rule
   ExecWait 'netsh advfirewall firewall delete rule name="HybridMusicPlayer"'
+
+  ; Remove shortcut
+  Delete "$DESKTOP\\Hybrid Music Player.lnk"
 
   ; Remove files
   RMDir /r "$INSTDIR"

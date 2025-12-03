@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import { initDatabase } from './config/database.js'
 import db from './config/database.js'
+import { MUSIC_PATH } from './config/paths.js'
 import fs from 'fs'
 import tracksRouter from './routes/tracks.js'
 import playlistsRouter from './routes/playlists.js'
@@ -18,20 +19,22 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 const PORT = process.env.PORT || 3001
-const MUSIC_STORAGE_PATH = process.env.MUSIC_STORAGE_PATH || './music'
+const MUSIC_STORAGE_PATH = process.env.MUSIC_STORAGE_PATH || MUSIC_PATH
 
 // Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -48,8 +51,10 @@ initDatabase()
 // Cleanup old trash (older than 30 days)
 try {
   console.log('Running trash cleanup...')
-  const tracksToDelete = db.prepare("SELECT id, file_path FROM tracks WHERE deleted_at < datetime('now', '-30 days')").all()
-  
+  const tracksToDelete = db
+    .prepare("SELECT id, file_path FROM tracks WHERE deleted_at < datetime('now', '-30 days')")
+    .all()
+
   for (const track of tracksToDelete) {
     if (track.file_path && fs.existsSync(track.file_path)) {
       try {
@@ -59,9 +64,11 @@ try {
       }
     }
   }
-  
+
   if (tracksToDelete.length > 0) {
-    const result = db.prepare("DELETE FROM tracks WHERE deleted_at < datetime('now', '-30 days')").run()
+    const result = db
+      .prepare("DELETE FROM tracks WHERE deleted_at < datetime('now', '-30 days')")
+      .run()
     console.log(`Cleaned up ${result.changes} old tracks from trash`)
   } else {
     console.log('No old tracks to clean up')
@@ -75,7 +82,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   })
 })
 
@@ -102,7 +109,7 @@ app.use((err, req, res, next) => {
   console.error('Error:', err)
   res.status(500).json({
     error: 'Internal server error',
-    message: err.message
+    message: err.message,
   })
 })
 

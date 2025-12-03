@@ -27,6 +27,9 @@ Section "Install"
   ; Create Uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   
+  ; Create Desktop Shortcut
+  CreateShortCut "$DESKTOP\Hybrid Music Player.lnk" "http://localhost:3001" "" "$INSTDIR\dist\favicon.ico" 0
+  
 SectionEnd
 
 Section "Uninstall"
@@ -35,6 +38,9 @@ Section "Uninstall"
   
   ; Remove firewall rule
   ExecWait 'netsh advfirewall firewall delete rule name="HybridMusicPlayer"'
+
+  ; Remove shortcut
+  Delete "$DESKTOP\Hybrid Music Player.lnk"
 
   ; Remove files
   RMDir /r "$INSTDIR"
