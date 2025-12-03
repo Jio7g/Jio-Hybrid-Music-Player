@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Track } from '@/types'
 import api from '@/services/api'
 
@@ -16,6 +16,39 @@ function loadLoopModeFromStorage(): boolean {
   }
 }
 
+export interface ScheduleConfig {
+  weekdays: { start: string; end: string }
+  weekends: { start: string; end: string }
+}
+
+const DEFAULT_SCHEDULE: ScheduleConfig = {
+  weekdays: { start: '11:30', end: '22:00' },
+  weekends: { start: '07:30', end: '22:00' },
+}
+
+// Load scheduler mode from localStorage
+function loadSchedulerModeFromStorage(): boolean {
+  try {
+    const saved = localStorage.getItem('hybrid-player-scheduler-mode')
+    return saved === 'true'
+  } catch (error) {
+    console.error('Error loading scheduler mode from storage:', error)
+    return false
+  }
+}
+
+function loadScheduleConfigFromStorage(): ScheduleConfig {
+  try {
+    const saved = localStorage.getItem('hybrid-player-schedule-config')
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Error loading schedule config from storage:', error)
+  }
+  return DEFAULT_SCHEDULE
+}
+
 export const usePlayerStore = defineStore('player', () => {
   // State
   const playlist = ref<Track[]>([])
@@ -30,6 +63,55 @@ export const usePlayerStore = defineStore('player', () => {
   const isSyncing = ref<boolean>(false)
   const isLoadingTracks = ref<boolean>(false)
   const trash = ref<Track[]>([])
+  const schedulerEnabled = ref<boolean>(loadSchedulerModeFromStorage())
+  const scheduleConfig = ref<ScheduleConfig>(loadScheduleConfigFromStorage())
+
+  // Persistence logic
+  function loadPlaybackStateFromStorage() {
+    try {
+      const savedIndex = localStorage.getItem('hybrid-player-current-index')
+      const savedTime = localStorage.getItem('hybrid-player-current-time')
+      return {
+        index: savedIndex ? parseInt(savedIndex, 10) : -1,
+        time: savedTime ? parseFloat(savedTime) : 0,
+      }
+    } catch (error) {
+      console.error('Error loading playback state:', error)
+      return { index: -1, time: 0 }
+    }
+  }
+
+  const savedState = loadPlaybackStateFromStorage()
+  if (savedState.index !== -1) {
+    currentIndex.value = savedState.index
+    currentTime.value = savedState.time
+  }
+
+  // Watch for changes to save state
+  watch([currentIndex, currentTime], ([newIndex, newTime]) => {
+    if (newIndex !== -1) {
+      localStorage.setItem('hybrid-player-current-index', newIndex.toString())
+      localStorage.setItem('hybrid-player-current-time', newTime.toString())
+    }
+  })
+
+  function toggleScheduler() {
+    schedulerEnabled.value = !schedulerEnabled.value
+    try {
+      localStorage.setItem('hybrid-player-scheduler-mode', schedulerEnabled.value.toString())
+    } catch (error) {
+      console.error('Error saving scheduler mode to storage:', error)
+    }
+  }
+
+  function updateScheduleConfig(config: ScheduleConfig) {
+    scheduleConfig.value = config
+    try {
+      localStorage.setItem('hybrid-player-schedule-config', JSON.stringify(config))
+    } catch (error) {
+      console.error('Error saving schedule config to storage:', error)
+    }
+  }
 
   // Getters
   const hasNextTrack = computed(() => currentIndex.value < playlist.value.length - 1)
@@ -96,7 +178,6 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
-
   async function scanDropboxFolder(folderUrl: string) {
     console.log('Store: scanning folder', folderUrl)
     try {
@@ -110,16 +191,16 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
-  async function importTracks(tracks: { filename: string, url: string }[]) {
+  async function importTracks(tracks: { filename: string; url: string }[]) {
     try {
       isSyncing.value = true
       const result = await api.importTracks(tracks)
-      
+
       // Reload tracks to get the newly added ones
       if (result.added.length > 0) {
         await loadTracksFromBackend()
       }
-      
+
       return result
     } catch (error) {
       console.error('Error importing tracks:', error)
@@ -300,5 +381,11 @@ export const usePlayerStore = defineStore('player', () => {
     deleteTrackPermanently,
     emptyTrash,
     scanLocalFolder,
+
+    // Scheduler
+    schedulerEnabled,
+    toggleScheduler,
+    scheduleConfig,
+    updateScheduleConfig,
   }
 })

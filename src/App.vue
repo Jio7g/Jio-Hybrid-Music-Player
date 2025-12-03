@@ -2,11 +2,16 @@
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePlayerStore } from './stores/player'
+import { usePlaybackScheduler } from './composables/usePlaybackScheduler'
 import Playlist from './components/Playlist.vue'
 import PlayerControls from './components/PlayerControls.vue'
+import SchedulerSettingsModal from './components/SchedulerSettingsModal.vue'
+import { ref } from 'vue'
 
 const store = usePlayerStore()
 const { t, locale } = useI18n()
+const isSettingsOpen = ref(false)
+usePlaybackScheduler()
 
 function toggleLanguage() {
   locale.value = locale.value === 'en' ? 'es' : 'en'
@@ -25,32 +30,78 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-          <div class="bg-gradient-to-br from-primary-500 to-primary-700 p-2 rounded-lg">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-            </svg>
+            <div class="bg-gradient-to-br from-primary-500 to-primary-700 p-2 rounded-lg">
+              <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-white">{{ t('app.title') }}</h1>
+              <p class="text-sm text-gray-400">{{ t('app.subtitle') }}</p>
+            </div>
           </div>
-          <div>
-            <h1 class="text-2xl font-bold text-white">{{ t('app.title') }}</h1>
-            <p class="text-sm text-gray-400">{{ t('app.subtitle') }}</p>
+          <div class="flex items-center space-x-3">
+            <button
+              @click="store.toggleScheduler()"
+              class="px-3 py-1 rounded-lg text-sm font-medium transition-colors border flex items-center space-x-2"
+              :class="
+                store.schedulerEnabled
+                  ? 'bg-green-600/20 text-green-400 border-green-500/30 hover:bg-green-600/30'
+                  : 'bg-gray-700 text-gray-400 border-gray-600 hover:bg-gray-600'
+              "
+              :title="store.schedulerEnabled ? 'Scheduler Active' : 'Scheduler Inactive'"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{{ store.schedulerEnabled ? 'Auto ON' : 'Auto OFF' }}</span>
+            </button>
+            <button
+              @click="isSettingsOpen = true"
+              class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              title="Schedule Settings"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
+            <button
+              @click="toggleLanguage"
+              class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors border border-gray-600"
+            >
+              {{ locale === 'en' ? 'ES' : 'EN' }}
+            </button>
           </div>
         </div>
-        <button
-          @click="toggleLanguage"
-          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors border border-gray-600"
-        >
-          {{ locale === 'en' ? 'ES' : 'EN' }}
-        </button>
       </div>
-    </div>
-  </header>
+    </header>
 
     <!-- Main Content -->
     <main class="flex-1 overflow-hidden">
       <div class="max-w-7xl mx-auto h-full">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 h-full">
           <!-- Playlist Section -->
-          <div class="lg:col-span-2 bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden flex flex-col">
+          <div
+            class="lg:col-span-2 bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden flex flex-col"
+          >
             <Playlist />
           </div>
 
@@ -93,7 +144,9 @@ onMounted(() => {
               <div class="flex items-start space-x-3">
                 <div class="bg-primary-600 rounded-full p-2 flex-shrink-0">
                   <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                    <path
+                      d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -104,15 +157,23 @@ onMounted(() => {
             </div>
 
             <div class="mt-auto pt-6 border-t border-gray-700">
-              <h4 class="text-sm font-semibold mb-2 text-white">{{ t('howToUse.supportedFormats') }}</h4>
+              <h4 class="text-sm font-semibold mb-2 text-white">
+                {{ t('howToUse.supportedFormats') }}
+              </h4>
               <div class="flex flex-wrap gap-2">
-                <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium border border-blue-500/30">
+                <span
+                  class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium border border-blue-500/30"
+                >
                   MP3
                 </span>
-                <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-medium border border-yellow-500/30">
+                <span
+                  class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-medium border border-yellow-500/30"
+                >
                   Google Drive
                 </span>
-                <span class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium border border-red-500/30">
+                <span
+                  class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium border border-red-500/30"
+                >
                   YouTube
                 </span>
               </div>
@@ -133,5 +194,7 @@ onMounted(() => {
 
     <!-- Spacer for fixed player controls -->
     <div class="h-24"></div>
+
+    <SchedulerSettingsModal :is-open="isSettingsOpen" @close="isSettingsOpen = false" />
   </div>
 </template>

@@ -38,6 +38,9 @@ export function usePlayerAdapter() {
 
       audioElement.value.addEventListener('loadedmetadata', () => {
         store.setDuration(audioElement.value?.duration || 0)
+      })
+
+      audioElement.value.addEventListener('canplay', () => {
         store.setLoading(false)
       })
 
