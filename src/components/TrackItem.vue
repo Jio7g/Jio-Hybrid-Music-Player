@@ -13,6 +13,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   play: [track: Track, index: number]
   remove: [trackId: string]
+  edit: [track: Track]
 }>()
 
 const store = usePlayerStore()
@@ -59,11 +60,7 @@ function getTrackIcon() {
       <div
         v-else
         class="w-12 h-12 rounded flex items-center justify-center"
-        :class="[
-          isCurrentTrack
-            ? 'bg-primary-600'
-            : 'bg-gray-700 group-hover:bg-gray-600'
-        ]"
+        :class="[isCurrentTrack ? 'bg-primary-600' : 'bg-gray-700 group-hover:bg-gray-600']"
       >
         <!-- Music Note Icon -->
         <svg
@@ -73,7 +70,9 @@ function getTrackIcon() {
           fill="currentColor"
           viewBox="0 0 20 20"
         >
-          <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+          <path
+            d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"
+          />
         </svg>
         <!-- Google Drive Icon -->
         <svg
@@ -83,7 +82,9 @@ function getTrackIcon() {
           fill="currentColor"
           viewBox="0 0 24 24"
         >
-          <path d="M7.71 3.5L1.15 15l3.21 5.55L11.92 9.05 7.71 3.5zM12.36 9.43L6.8 20h13.11l-5.56-10.57h-1.99zM14.1 3.5l-3.21 5.55h7.85L22.85 3.5H14.1z"/>
+          <path
+            d="M7.71 3.5L1.15 15l3.21 5.55L11.92 9.05 7.71 3.5zM12.36 9.43L6.8 20h13.11l-5.56-10.57h-1.99zM14.1 3.5l-3.21 5.55h7.85L22.85 3.5H14.1z"
+          />
         </svg>
         <!-- Dropbox Icon -->
         <svg
@@ -93,7 +94,9 @@ function getTrackIcon() {
           fill="currentColor"
           viewBox="0 0 24 24"
         >
-          <path d="M6 1.807L0 5.629l6 3.822 6.001-3.822L6 1.807zM18 1.807l-6 3.822 6 3.822 6-3.822-6-3.822zM0 13.274l6 3.822 6.001-3.822L6 9.452 0 13.274zM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822zM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371z"/>
+          <path
+            d="M6 1.807L0 5.629l6 3.822 6.001-3.822L6 1.807zM18 1.807l-6 3.822 6 3.822 6-3.822-6-3.822zM0 13.274l6 3.822 6.001-3.822L6 9.452 0 13.274zM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822zM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371z"
+          />
         </svg>
         <!-- YouTube Icon -->
         <svg
@@ -103,7 +106,9 @@ function getTrackIcon() {
           fill="currentColor"
           viewBox="0 0 24 24"
         >
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          <path
+            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+          />
         </svg>
       </div>
 
@@ -139,21 +144,37 @@ function getTrackIcon() {
           track.type === 'youtube'
             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
             : track.type === 'drive'
-            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-            : track.type === 'dropbox'
-            ? 'bg-blue-400/20 text-blue-400 border border-blue-400/30'
-            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+              : track.type === 'dropbox'
+                ? 'bg-blue-400/20 text-blue-400 border border-blue-400/30'
+                : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
         ]"
       >
         {{
           track.type === 'drive'
             ? 'DRIVE'
             : track.type === 'dropbox'
-            ? 'DROPBOX'
-            : track.type.toUpperCase()
+              ? 'DROPBOX'
+              : track.type.toUpperCase()
         }}
       </span>
     </div>
+
+    <!-- Edit Button -->
+    <button
+      @click.stop="emit('edit', track)"
+      class="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-500/20 rounded-full text-gray-400 hover:text-blue-400 mr-1"
+      :title="t('common.edit')"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+        />
+      </svg>
+    </button>
 
     <!-- Remove Button -->
     <button

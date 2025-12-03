@@ -4,6 +4,12 @@
     "subtitle": "MP3 y YouTube en una lista de reproducción",
     "builtWith": "Creado con Vue 3, TypeScript, Pinia y Tailwind CSS"
   },
+  "common": {
+    "edit": "Editar",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "cancel": "Cancelar"
+  },
   "header": {
     "addTrack": "Agregar Pista",
     "trash": "Papelera",
@@ -92,6 +98,11 @@
       "message": "¿Estás seguro de que deseas mover esta pista a la papelera? Puedes restaurarla luego dentro de los 30 días.",
       "cancel": "Cancelar",
       "delete": "Eliminar"
+    },
+    "editTrack": {
+      "title": "Editar Pista",
+      "trackTitle": "Título",
+      "artist": "Artista"
     }
   },
   "alerts": {
@@ -112,6 +123,7 @@
     "errorAdding": "Error al agregar la pista: {error}",
     "confirmClearPlaylist": "¿Estás seguro de que deseas limpiar toda la lista de reproducción?",
     "importSuccess": "¡Importación completada!\nAgregadas: {added}\nFallidas: {failed}",
-    "importError": "Error al importar las canciones."
+    "importError": "Error al importar las canciones.",
+    "errorUpdating": "Error al actualizar la pista"
   }
 }

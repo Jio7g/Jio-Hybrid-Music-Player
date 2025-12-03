@@ -148,6 +148,28 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
+  async function updateTrack(track: Track) {
+    try {
+      const updatedTrack = await api.updateTrack(track.id, track)
+
+      // Update in playlist
+      const index = playlist.value.findIndex(t => t.id === track.id)
+      if (index !== -1) {
+        playlist.value[index] = { ...updatedTrack }
+      }
+
+      // Update current track if it's the one being edited
+      if (currentTrack.value?.id === track.id) {
+        currentTrack.value = { ...updatedTrack }
+      }
+
+      return updatedTrack
+    } catch (error) {
+      console.error('Error updating track:', error)
+      throw error
+    }
+  }
+
   async function removeTrack(trackId: string) {
     const index = playlist.value.findIndex(t => t.id === trackId)
     if (index !== -1) {
@@ -360,6 +382,7 @@ export const usePlayerStore = defineStore('player', () => {
     loadTracksFromBackend,
     setPlaylist,
     addTrack,
+    updateTrack,
     removeTrack,
     downloadDropboxFile,
     setCurrentTrack,

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { usePlayerStore } from '@/stores/player'
 import { getPlayerAdapter } from '@/services/playerService'
 import TrackItem from './TrackItem.vue'
+import EditTrackModal from './EditTrackModal.vue'
 import type { Track, TrackType } from '@/types'
 
 const store = usePlayerStore()
@@ -15,12 +16,14 @@ const showAddTrackModal = ref(false)
 const showTrashModal = ref(false)
 const activeTab = ref<'single' | 'batch'>('single')
 const batchUrl = ref('')
-const scannedTracks = ref<{ filename: string, url: string, selected: boolean }[]>([])
+const scannedTracks = ref<{ filename: string; url: string; selected: boolean }[]>([])
 const isScanning = ref(false)
 const isImporting = ref(false)
 const showDetails = ref(false)
 const showDeleteConfirmModal = ref(false)
 const trackToDeleteId = ref<string | null>(null)
+const showEditModal = ref(false)
+const trackToEdit = ref<Track | null>(null)
 
 const newTrack = ref({
   title: '',
@@ -31,37 +34,42 @@ const newTrack = ref({
 })
 
 // Watch for URL changes to auto-fill title
-watch(() => newTrack.value.src, (url) => {
-  if (!url) return
-  
-  try {
-    const urlObj = new URL(url)
-    let filename = ''
-    
-    // Extract filename from path
-    const pathParts = urlObj.pathname.split('/')
-    filename = pathParts[pathParts.length - 1]
-    
-    if (filename) {
-      // Decode URI components (e.g. %20 -> space)
-      filename = decodeURIComponent(filename)
-      // Remove extension
-      filename = filename.replace(/\.[^/.]+$/, "")
-      
-      // Only auto-fill if not manually editing or if title is empty
-      if (!showDetails.value || !newTrack.value.title) {
-        newTrack.value.title = filename
+watch(
+  () => newTrack.value.src,
+  url => {
+    if (!url) return
+
+    try {
+      const urlObj = new URL(url)
+      let filename = ''
+
+      // Extract filename from path
+      const pathParts = urlObj.pathname.split('/')
+      filename = pathParts[pathParts.length - 1]
+
+      if (filename) {
+        // Decode URI components (e.g. %20 -> space)
+        filename = decodeURIComponent(filename)
+        // Remove extension
+        filename = filename.replace(/\.[^/.]+$/, '')
+
+        // Only auto-fill if not manually editing or if title is empty
+        if (!showDetails.value || !newTrack.value.title) {
+          newTrack.value.title = filename
+        }
       }
+    } catch (e) {
+      // Ignore invalid URLs
     }
-  } catch (e) {
-    // Ignore invalid URLs
   }
-})
+)
 
 // Computed
 const hasPlaylist = computed(() => store.playlist.length > 0)
 const selectedTracksCount = computed(() => scannedTracks.value.filter(t => t.selected).length)
-const allSelected = computed(() => scannedTracks.value.length > 0 && scannedTracks.value.every(t => t.selected))
+const allSelected = computed(
+  () => scannedTracks.value.length > 0 && scannedTracks.value.every(t => t.selected)
+)
 
 // Methods
 async function handlePlayTrack(track: Track, index: number) {
@@ -71,7 +79,9 @@ async function handlePlayTrack(track: Track, index: number) {
     await adapter.play()
   } catch (error) {
     console.error('Error playing track:', error)
-    alert(t('alerts.errorPlaying', { error: error instanceof Error ? error.message : 'Unknown error' }))
+    alert(
+      t('alerts.errorPlaying', { error: error instanceof Error ? error.message : 'Unknown error' })
+    )
   }
 }
 
@@ -94,9 +104,29 @@ async function confirmDeleteTrack() {
   }
 }
 
+function handleEditTrack(track: Track) {
+  trackToEdit.value = track
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+  trackToEdit.value = null
+}
+
+async function handleSaveTrack(updatedTrack: Track) {
+  try {
+    await store.updateTrack(updatedTrack)
+    closeEditModal()
+  } catch (error) {
+    console.error('Error updating track:', error)
+    alert(t('alerts.errorUpdating'))
+  }
+}
+
 async function scanFolder() {
   if (!batchUrl.value) return
-  
+
   // Validaciones
   if (batchUrl.value.includes('drive.google.com')) {
     alert(t('alerts.driveNotSupported'))
@@ -107,21 +137,21 @@ async function scanFolder() {
     alert(t('alerts.invalidDropbox'))
     return
   }
-  
+
   try {
     isScanning.value = true
     scannedTracks.value = []
-    
+
     // Verificar si la función existe antes de llamarla
     if (typeof store.scanDropboxFolder !== 'function') {
       throw new Error('La función de escaneo no está inicializada. Por favor recarga la página.')
     }
 
     const files = await store.scanDropboxFolder(batchUrl.value)
-    
+
     scannedTracks.value = files.map(f => ({
       ...f,
-      selected: true
+      selected: true,
     }))
   } catch (error) {
     console.error('Error scanning folder:', error)
@@ -155,10 +185,8 @@ async function handleDeletePermanently(trackId: string) {
 }
 
 async function handleEmptyTrash(olderThan30Days: boolean = false) {
-  const message = olderThan30Days 
-    ? t('alerts.confirmDeleteOld')
-    : t('alerts.confirmEmptyTrash')
-    
+  const message = olderThan30Days ? t('alerts.confirmDeleteOld') : t('alerts.confirmEmptyTrash')
+
   if (confirm(message)) {
     try {
       await store.emptyTrash(olderThan30Days)
@@ -215,7 +243,9 @@ async function addTrack() {
     showAddTrackModal.value = false
   } catch (error) {
     console.error('Error adding track:', error)
-    alert(t('alerts.errorAdding', { error: error instanceof Error ? error.message : 'Unknown error' }))
+    alert(
+      t('alerts.errorAdding', { error: error instanceof Error ? error.message : 'Unknown error' })
+    )
   }
 }
 
@@ -258,7 +288,7 @@ function loadSamplePlaylist() {
 
 function toggleSelectAll(e: Event) {
   const checked = (e.target as HTMLInputElement).checked
-  scannedTracks.value.forEach(t => t.selected = checked)
+  scannedTracks.value.forEach(t => (t.selected = checked))
 }
 
 async function importSelectedTracks() {
@@ -268,9 +298,9 @@ async function importSelectedTracks() {
   try {
     isImporting.value = true
     const result = await store.importTracks(tracksToImport)
-    
+
     alert(t('alerts.importSuccess', { added: result.added.length, failed: result.failed.length }))
-    
+
     if (result.added.length > 0) {
       showAddTrackModal.value = false
       batchUrl.value = ''
@@ -283,7 +313,6 @@ async function importSelectedTracks() {
     isImporting.value = false
   }
 }
-
 </script>
 
 <template>
@@ -306,7 +335,12 @@ async function importSelectedTracks() {
             title="Trash"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
             <span>{{ t('header.trash') }}</span>
           </button>
@@ -385,6 +419,7 @@ async function importSelectedTracks() {
         :index="index"
         @play="handlePlayTrack"
         @remove="handleRemoveTrack"
+        @edit="handleEditTrack"
       />
     </div>
 
@@ -394,7 +429,9 @@ async function importSelectedTracks() {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       @click.self="showAddTrackModal = false"
     >
-      <div class="bg-gray-800 rounded-lg shadow-2xl max-w-md w-full p-6 border border-gray-700 max-h-[90vh] flex flex-col">
+      <div
+        class="bg-gray-800 rounded-lg shadow-2xl max-w-md w-full p-6 border border-gray-700 max-h-[90vh] flex flex-col"
+      >
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-xl font-bold text-white">{{ t('modal.addTrack.title') }}</h3>
           <button
@@ -416,25 +453,41 @@ async function importSelectedTracks() {
           <button
             @click="activeTab = 'single'"
             class="flex-1 py-2 text-sm font-medium transition-colors relative"
-            :class="activeTab === 'single' ? 'text-primary-400' : 'text-gray-400 hover:text-gray-300'"
+            :class="
+              activeTab === 'single' ? 'text-primary-400' : 'text-gray-400 hover:text-gray-300'
+            "
           >
             {{ t('modal.addTrack.tabs.single') }}
-            <div v-if="activeTab === 'single'" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500"></div>
+            <div
+              v-if="activeTab === 'single'"
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500"
+            ></div>
           </button>
           <button
             @click="activeTab = 'batch'"
             class="flex-1 py-2 text-sm font-medium transition-colors relative"
-            :class="activeTab === 'batch' ? 'text-primary-400' : 'text-gray-400 hover:text-gray-300'"
+            :class="
+              activeTab === 'batch' ? 'text-primary-400' : 'text-gray-400 hover:text-gray-300'
+            "
           >
             {{ t('modal.addTrack.tabs.batch') }}
-            <div v-if="activeTab === 'batch'" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500"></div>
+            <div
+              v-if="activeTab === 'batch'"
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500"
+            ></div>
           </button>
         </div>
 
         <!-- Single Track Form -->
-        <form v-if="activeTab === 'single'" @submit.prevent="addTrack" class="space-y-4 overflow-y-auto">
+        <form
+          v-if="activeTab === 'single'"
+          @submit.prevent="addTrack"
+          class="space-y-4 overflow-y-auto"
+        >
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.type') }}</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">{{
+              t('modal.addTrack.type')
+            }}</label>
             <select
               v-model="newTrack.type"
               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -447,7 +500,9 @@ async function importSelectedTracks() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.sourceUrl') }}</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">{{
+              t('modal.addTrack.sourceUrl')
+            }}</label>
             <input
               v-model="newTrack.src"
               type="url"
@@ -456,10 +511,10 @@ async function importSelectedTracks() {
                 newTrack.type === 'mp3'
                   ? 'https://example.com/song.mp3'
                   : newTrack.type === 'dropbox'
-                  ? 'https://www.dropbox.com/s/abc123/song.mp3?dl=0'
-                  : newTrack.type === 'drive'
-                  ? 'https://drive.google.com/file/d/FILE_ID/view'
-                  : 'https://www.youtube.com/watch?v=...'
+                    ? 'https://www.dropbox.com/s/abc123/song.mp3?dl=0'
+                    : newTrack.type === 'drive'
+                      ? 'https://drive.google.com/file/d/FILE_ID/view'
+                      : 'https://www.youtube.com/watch?v=...'
               "
               required
             />
@@ -472,12 +527,17 @@ async function importSelectedTracks() {
           </div>
 
           <!-- Auto-detected title preview -->
-          <div v-if="!showDetails && newTrack.title" class="bg-gray-700/50 p-3 rounded-lg border border-gray-600 flex justify-between items-center">
+          <div
+            v-if="!showDetails && newTrack.title"
+            class="bg-gray-700/50 p-3 rounded-lg border border-gray-600 flex justify-between items-center"
+          >
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">{{ t('modal.addTrack.detectedTitle') }}</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                {{ t('modal.addTrack.detectedTitle') }}
+              </p>
               <p class="text-white font-medium truncate max-w-[250px]">{{ newTrack.title }}</p>
             </div>
-            <button 
+            <button
               type="button"
               @click="showDetails = true"
               class="text-xs bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded transition-colors"
@@ -488,12 +548,12 @@ async function importSelectedTracks() {
 
           <!-- Checkbox to show details -->
           <div class="flex items-center">
-            <input 
-              id="showDetails" 
-              type="checkbox" 
+            <input
+              id="showDetails"
+              type="checkbox"
               v-model="showDetails"
               class="w-4 h-4 text-primary-600 bg-gray-700 border-gray-600 rounded focus:ring-primary-500 focus:ring-offset-gray-800"
-            >
+            />
             <label for="showDetails" class="ml-2 text-sm text-gray-300 cursor-pointer select-none">
               {{ t('modal.addTrack.manualEdit') }}
             </label>
@@ -501,7 +561,9 @@ async function importSelectedTracks() {
 
           <div v-if="showDetails" class="space-y-4 border-t border-gray-700 pt-4 animate-fade-in">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.trackTitle') }}</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">{{
+                t('modal.addTrack.trackTitle')
+              }}</label>
               <input
                 v-model="newTrack.title"
                 type="text"
@@ -512,7 +574,9 @@ async function importSelectedTracks() {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.artist') }}</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">{{
+                t('modal.addTrack.artist')
+              }}</label>
               <input
                 v-model="newTrack.artist"
                 type="text"
@@ -522,7 +586,9 @@ async function importSelectedTracks() {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.coverUrl') }}</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">{{
+                t('modal.addTrack.coverUrl')
+              }}</label>
               <input
                 v-model="newTrack.cover"
                 type="url"
@@ -553,7 +619,9 @@ async function importSelectedTracks() {
         <div v-else class="flex flex-col h-full overflow-hidden">
           <div class="space-y-4 mb-4">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('modal.addTrack.batch.folderUrl') }}</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">{{
+                t('modal.addTrack.batch.folderUrl')
+              }}</label>
               <div class="flex space-x-2">
                 <input
                   v-model="batchUrl"
@@ -567,7 +635,9 @@ async function importSelectedTracks() {
                   :disabled="isScanning || !batchUrl"
                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {{ isScanning ? t('modal.addTrack.batch.scanning') : t('modal.addTrack.batch.scan') }}
+                  {{
+                    isScanning ? t('modal.addTrack.batch.scanning') : t('modal.addTrack.batch.scan')
+                  }}
                 </button>
               </div>
               <p class="text-xs text-gray-400 mt-1">
@@ -580,29 +650,31 @@ async function importSelectedTracks() {
           <div v-if="scannedTracks.length > 0" class="flex-1 overflow-hidden flex flex-col">
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   :checked="allSelected"
                   @change="toggleSelectAll"
                   class="w-4 h-4 text-primary-600 bg-gray-700 border-gray-600 rounded focus:ring-primary-500 focus:ring-offset-gray-800"
-                >
-                <span class="ml-2 text-sm text-gray-300">{{ t('modal.addTrack.batch.selectAll', { count: selectedTracksCount }) }}</span>
+                />
+                <span class="ml-2 text-sm text-gray-300">{{
+                  t('modal.addTrack.batch.selectAll', { count: selectedTracksCount })
+                }}</span>
               </div>
             </div>
 
             <div class="flex-1 overflow-y-auto border border-gray-700 rounded-lg bg-gray-900/50">
-              <div 
-                v-for="(track, idx) in scannedTracks" 
+              <div
+                v-for="(track, idx) in scannedTracks"
                 :key="idx"
                 class="flex items-center p-3 hover:bg-gray-700/50 border-b border-gray-700/50 last:border-0 transition-colors cursor-pointer"
                 @click="track.selected = !track.selected"
               >
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   v-model="track.selected"
                   class="w-4 h-4 text-primary-600 bg-gray-700 border-gray-600 rounded focus:ring-primary-500 focus:ring-offset-gray-800"
                   @click.stop
-                >
+                />
                 <div class="ml-3 overflow-hidden">
                   <p class="text-sm text-white truncate">{{ track.filename }}</p>
                 </div>
@@ -615,16 +687,39 @@ async function importSelectedTracks() {
                 :disabled="isImporting || selectedTracksCount === 0"
                 class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                <svg v-if="isImporting" class="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  v-if="isImporting"
+                  class="w-5 h-5 animate-spin mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
-                {{ isImporting ? t('modal.addTrack.batch.importing') : t('modal.addTrack.batch.import', { count: selectedTracksCount }) }}
+                {{
+                  isImporting
+                    ? t('modal.addTrack.batch.importing')
+                    : t('modal.addTrack.batch.import', { count: selectedTracksCount })
+                }}
               </button>
             </div>
           </div>
-          
-          <div v-else-if="!isScanning && batchUrl && scannedTracks.length === 0" class="flex-1 flex items-center justify-center text-gray-500">
+
+          <div
+            v-else-if="!isScanning && batchUrl && scannedTracks.length === 0"
+            class="flex-1 flex items-center justify-center text-gray-500"
+          >
             <p>{{ t('modal.addTrack.batch.noTracks') }}</p>
           </div>
         </div>
@@ -672,7 +767,12 @@ async function importSelectedTracks() {
                 title="Restore"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
               </button>
               <button
@@ -681,7 +781,12 @@ async function importSelectedTracks() {
                 title="Delete Permanently"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -700,7 +805,7 @@ async function importSelectedTracks() {
           >
             {{ t('modal.trash.recoverOrphaned') }}
           </button>
-          
+
           <div class="flex space-x-3">
             <button
               @click="handleEmptyTrash(true)"
@@ -726,10 +831,17 @@ async function importSelectedTracks() {
       class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
       @click.self="showDeleteConfirmModal = false"
     >
-      <div class="bg-gray-800 rounded-lg shadow-2xl max-w-sm w-full p-6 border border-gray-700 text-center">
+      <div
+        class="bg-gray-800 rounded-lg shadow-2xl max-w-sm w-full p-6 border border-gray-700 text-center"
+      >
         <div class="mb-4 text-yellow-500 flex justify-center">
           <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
         </div>
         <h3 class="text-xl font-bold text-white mb-2">{{ t('modal.deleteConfirm.title') }}</h3>
@@ -752,5 +864,13 @@ async function importSelectedTracks() {
         </div>
       </div>
     </div>
+    <!-- Edit Track Modal -->
+    <EditTrackModal
+      v-if="trackToEdit"
+      :track="trackToEdit"
+      :isOpen="showEditModal"
+      @close="closeEditModal"
+      @save="handleSaveTrack"
+    />
   </div>
 </template>

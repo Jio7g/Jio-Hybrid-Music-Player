@@ -4,6 +4,12 @@
     "subtitle": "MP3 & YouTube in one playlist",
     "builtWith": "Built with Vue 3, TypeScript, Pinia & Tailwind CSS"
   },
+  "common": {
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel"
+  },
   "header": {
     "addTrack": "Add Track",
     "trash": "Trash",
@@ -92,6 +98,11 @@
       "message": "Are you sure you want to move this track to trash? You can restore it later within 30 days.",
       "cancel": "Cancel",
       "delete": "Delete"
+    },
+    "editTrack": {
+      "title": "Edit Track",
+      "trackTitle": "Title",
+      "artist": "Artist"
     }
   },
   "alerts": {
@@ -112,6 +123,7 @@
     "errorAdding": "Error adding track: {error}",
     "confirmClearPlaylist": "Are you sure you want to clear the entire playlist?",
     "importSuccess": "Import completed!\nAdded: {added}\nFailed: {failed}",
-    "importError": "Error importing tracks."
+    "importError": "Error importing tracks.",
+    "errorUpdating": "Error updating track"
   }
 }
