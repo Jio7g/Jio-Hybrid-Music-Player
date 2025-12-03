@@ -1,7 +1,7 @@
 import type { Track } from '@/types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api')
 
 interface SyncHistoryItem {
   id: number
@@ -72,16 +72,18 @@ class ApiService {
     })
   }
 
-
   async getSyncHistory(limit: number = 10): Promise<SyncHistoryItem[]> {
     return this.request<SyncHistoryItem[]>(`/sync/history?limit=${limit}`)
   }
 
   async downloadDropboxFile(url: string, title?: string, artist?: string): Promise<Track> {
-    const response = await this.request<{ success: boolean; track: Track }>('/download/dropbox-file', {
-      method: 'POST',
-      body: JSON.stringify({ url, title, artist }),
-    })
+    const response = await this.request<{ success: boolean; track: Track }>(
+      '/download/dropbox-file',
+      {
+        method: 'POST',
+        body: JSON.stringify({ url, title, artist }),
+      }
+    )
     return response.track
   }
 
@@ -95,19 +97,27 @@ class ApiService {
     return this.baseUrl.replace('/api', `/music/${filename}`)
   }
 
-  async scanDropboxFolder(folderUrl: string): Promise<{ filename: string, url: string }[]> {
-    const response = await this.request<{ success: boolean, files: { filename: string, url: string }[] }>('/sync/scan', {
+  async scanDropboxFolder(folderUrl: string): Promise<{ filename: string; url: string }[]> {
+    const response = await this.request<{
+      success: boolean
+      files: { filename: string; url: string }[]
+    }>('/sync/scan', {
       method: 'POST',
       body: JSON.stringify({ folderUrl }),
     })
     return response.files
   }
 
-  async importTracks(tracks: { filename: string, url: string }[]): Promise<{ added: any[], failed: any[] }> {
-    const response = await this.request<{ success: boolean, added: any[], failed: any[] }>('/sync/import', {
-      method: 'POST',
-      body: JSON.stringify({ tracks }),
-    })
+  async importTracks(
+    tracks: { filename: string; url: string }[]
+  ): Promise<{ added: any[]; failed: any[] }> {
+    const response = await this.request<{ success: boolean; added: any[]; failed: any[] }>(
+      '/sync/import',
+      {
+        method: 'POST',
+        body: JSON.stringify({ tracks }),
+      }
+    )
     return { added: response.added, failed: response.failed }
   }
 
@@ -142,9 +152,12 @@ class ApiService {
   }
 
   async scanLocalFolder(): Promise<{ success: boolean; added: number; message: string }> {
-    return this.request<{ success: boolean; added: number; message: string }>('/tracks/scan-local', {
-      method: 'POST',
-    })
+    return this.request<{ success: boolean; added: number; message: string }>(
+      '/tracks/scan-local',
+      {
+        method: 'POST',
+      }
+    )
   }
 }
 
