@@ -48,6 +48,46 @@ app.use((req, res, next) => {
 console.log('Initializing database...')
 initDatabase()
 
+// Migration: Move files from legacy ./music to MUSIC_STORAGE_PATH
+const legacyMusicPath = path.join(__dirname, 'music')
+if (fs.existsSync(legacyMusicPath) && legacyMusicPath !== path.resolve(MUSIC_STORAGE_PATH)) {
+  console.log('Checking for legacy music files...')
+  try {
+    const files = fs.readdirSync(legacyMusicPath)
+    let movedCount = 0
+
+    files.forEach(file => {
+      const srcPath = path.join(legacyMusicPath, file)
+      const destPath = path.join(MUSIC_STORAGE_PATH, file)
+
+      // Only move files, and only if they don't exist in destination
+      if (fs.lstatSync(srcPath).isFile() && !fs.existsSync(destPath)) {
+        try {
+          fs.renameSync(srcPath, destPath)
+          console.log(`Migrated: ${file}`)
+          movedCount++
+        } catch (err) {
+          // Fallback to copy+unlink if rename fails (e.g. across drives)
+          try {
+            fs.copyFileSync(srcPath, destPath)
+            fs.unlinkSync(srcPath)
+            console.log(`Migrated (copy): ${file}`)
+            movedCount++
+          } catch (e) {
+            console.error(`Failed to migrate ${file}:`, e)
+          }
+        }
+      }
+    })
+
+    if (movedCount > 0) {
+      console.log(`Migration complete: Moved ${movedCount} files to ${MUSIC_STORAGE_PATH}`)
+    }
+  } catch (error) {
+    console.error('Error during music migration:', error)
+  }
+}
+
 // Cleanup old trash (older than 30 days)
 try {
   console.log('Running trash cleanup...')
