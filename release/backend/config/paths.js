@@ -7,12 +7,13 @@ const __dirname = path.dirname(__filename)
 
 const isWindows = process.platform === 'win32'
 const isProduction = process.env.NODE_ENV === 'production'
+const isInProgramFiles = __dirname.includes('Program Files')
 
 let dataDir
 
-if (isWindows && isProduction) {
-  // In production on Windows, use ProgramData
-  // e.g., C:\ProgramData\HybridMusicPlayer
+if (isWindows && (isProduction || isInProgramFiles)) {
+  // In production on Windows OR if running from Program Files
+  // use ProgramData (e.g., C:\ProgramData\HybridMusicPlayer)
   const programData = process.env.ProgramData || 'C:\\ProgramData'
   dataDir = path.join(programData, 'HybridMusicPlayer')
 } else {
