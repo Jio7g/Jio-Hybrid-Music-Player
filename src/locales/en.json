@@ -1,0 +1,117 @@
+{
+  "app": {
+    "title": "Hybrid Music Player",
+    "subtitle": "MP3 & YouTube in one playlist",
+    "builtWith": "Built with Vue 3, TypeScript, Pinia & Tailwind CSS"
+  },
+  "header": {
+    "addTrack": "Add Track",
+    "trash": "Trash",
+    "clearPlaylist": "Clear Playlist",
+    "tracks": "{count} track | {count} tracks"
+  },
+  "playlist": {
+    "emptyTitle": "Your playlist is empty",
+    "emptySubtitle": "Add tracks to start listening",
+    "loadSample": "Load Sample",
+    "local": "LOCAL"
+  },
+  "howToUse": {
+    "title": "How to Use",
+    "addTracks": {
+      "title": "Add Tracks",
+      "desc": "Click \"Add Track\" to include MP3 files or YouTube videos"
+    },
+    "playMusic": {
+      "title": "Play Music",
+      "desc": "Click any track to start playing. Use controls at the bottom"
+    },
+    "hybridSupport": {
+      "title": "Hybrid Support",
+      "desc": "Mix MP3, Google Drive files, and YouTube videos in one playlist"
+    },
+    "supportedFormats": "Supported Formats"
+  },
+  "player": {
+    "noTrack": "No track selected",
+    "previous": "Previous",
+    "play": "Play",
+    "pause": "Pause",
+    "next": "Next",
+    "loopOn": "Loop: On",
+    "loopOff": "Loop: Off"
+  },
+  "trackItem": {
+    "remove": "Remove from playlist"
+  },
+  "modal": {
+    "addTrack": {
+      "title": "Add New Track",
+      "tabs": {
+        "single": "Single Track",
+        "batch": "Batch Import (Folder)"
+      },
+      "type": "Type *",
+      "sourceUrl": "Source URL *",
+      "detectedTitle": "DETECTED TITLE",
+      "edit": "Edit",
+      "manualEdit": "Edit title and details manually",
+      "trackTitle": "Title *",
+      "artist": "Artist",
+      "coverUrl": "Cover Image URL",
+      "buttons": {
+        "add": "Add Track",
+        "cancel": "Cancel"
+      },
+      "dropbox": {
+        "hint": "✅ Dropbox works perfectly. Share your file and paste the link here.",
+        "folderHint": "Paste the public link of a Dropbox folder to list its songs."
+      },
+      "drive": {
+        "warning": "⚠️ Google Drive has CORS limitations. Use Dropbox for better results."
+      },
+      "batch": {
+        "folderUrl": "Folder URL (Dropbox)",
+        "scan": "Scan",
+        "scanning": "Scanning...",
+        "selectAll": "Select All ({count})",
+        "import": "Import {count} Tracks",
+        "importing": "Importing...",
+        "noTracks": "No tracks found or scan not started."
+      }
+    },
+    "trash": {
+      "title": "Trash",
+      "empty": "Trash is empty",
+      "recoverOrphaned": "Recover Orphaned Files",
+      "cleanOld": "Clean > 30 days",
+      "emptyTrash": "Empty Trash"
+    },
+    "deleteConfirm": {
+      "title": "Delete Track?",
+      "message": "Are you sure you want to move this track to trash? You can restore it later within 30 days.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    }
+  },
+  "alerts": {
+    "errorPlaying": "Error playing track: {error}",
+    "failedRemove": "Failed to remove track",
+    "driveNotSupported": "Google Drive folder scanning is not supported due to security restrictions.\n\nPlease use Dropbox for full folders.",
+    "invalidDropbox": "Please enter a valid Dropbox URL.\nExample: https://www.dropbox.com/sh/...",
+    "scanError": "Error scanning folder. Make sure the link is public and valid.",
+    "failedRestore": "Failed to restore track",
+    "confirmPermanentDelete": "Are you sure you want to permanently delete this track? This cannot be undone.",
+    "failedDelete": "Failed to delete track",
+    "confirmDeleteOld": "Are you sure you want to delete tracks older than 30 days?",
+    "confirmEmptyTrash": "Are you sure you want to permanently delete ALL items in trash?",
+    "failedEmptyTrash": "Failed to empty trash",
+    "scanLocalSuccess": "{message}",
+    "failedScanLocal": "Failed to scan local folder",
+    "fillRequired": "Please fill in title and source URL",
+    "errorAdding": "Error adding track: {error}",
+    "confirmClearPlaylist": "Are you sure you want to clear the entire playlist?",
+    "importSuccess": "Import completed!\nAdded: {added}\nFailed: {failed}",
+    "importError": "Error importing tracks."
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "app": {
+    "title": "Hybrid Music Player",
+    "subtitle": "MP3 y YouTube en una lista de reproducción",
+    "builtWith": "Creado con Vue 3, TypeScript, Pinia y Tailwind CSS"
+  },
+  "header": {
+    "addTrack": "Agregar Pista",
+    "trash": "Papelera",
+    "clearPlaylist": "Limpiar Lista",
+    "tracks": "{count} pista | {count} pistas"
+  },
+  "playlist": {
+    "emptyTitle": "Tu lista de reproducción está vacía",
+    "emptySubtitle": "Agrega pistas para comenzar a escuchar",
+    "loadSample": "Cargar Ejemplo",
+    "local": "LOCAL"
+  },
+  "howToUse": {
+    "title": "Cómo Usar",
+    "addTracks": {
+      "title": "Agregar Pistas",
+      "desc": "Haz clic en \"Agregar Pista\" para incluir archivos MP3 o videos de YouTube"
+    },
+    "playMusic": {
+      "title": "Reproducir Música",
+      "desc": "Haz clic en cualquier pista para comenzar. Usa los controles en la parte inferior"
+    },
+    "hybridSupport": {
+      "title": "Soporte Híbrido",
+      "desc": "Mezcla MP3, archivos de Google Drive y videos de YouTube en una lista"
+    },
+    "supportedFormats": "Formatos Soportados"
+  },
+  "player": {
+    "noTrack": "Ninguna pista seleccionada",
+    "previous": "Anterior",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "next": "Siguiente",
+    "loopOn": "Bucle: Activado",
+    "loopOff": "Bucle: Desactivado"
+  },
+  "trackItem": {
+    "remove": "Eliminar de la lista"
+  },
+  "modal": {
+    "addTrack": {
+      "title": "Agregar Nueva Pista",
+      "tabs": {
+        "single": "Pista Individual",
+        "batch": "Importación por Lote (Carpeta)"
+      },
+      "type": "Tipo *",
+      "sourceUrl": "URL de Origen *",
+      "detectedTitle": "TÍTULO DETECTADO",
+      "edit": "Editar",
+      "manualEdit": "Editar título y detalles manualmente",
+      "trackTitle": "Título *",
+      "artist": "Artista",
+      "coverUrl": "URL de Imagen de Portada",
+      "buttons": {
+        "add": "Agregar Pista",
+        "cancel": "Cancelar"
+      },
+      "dropbox": {
+        "hint": "✅ Dropbox funciona perfectamente. Comparte tu archivo y pega el enlace aquí.",
+        "folderHint": "Pega el enlace público de una carpeta de Dropbox para listar sus canciones."
+      },
+      "drive": {
+        "warning": "⚠️ Google Drive tiene limitaciones de CORS. Usa Dropbox para mejores resultados."
+      },
+      "batch": {
+        "folderUrl": "URL de Carpeta (Dropbox)",
+        "scan": "Escanear",
+        "scanning": "Escaneando...",
+        "selectAll": "Seleccionar Todo ({count})",
+        "import": "Importar {count} Pistas",
+        "importing": "Importando...",
+        "noTracks": "No se encontraron pistas o no se ha iniciado el escaneo."
+      }
+    },
+    "trash": {
+      "title": "Papelera",
+      "empty": "La papelera está vacía",
+      "recoverOrphaned": "Recuperar Archivos Huérfanos",
+      "cleanOld": "Limpiar > 30 días",
+      "emptyTrash": "Vaciar Papelera"
+    },
+    "deleteConfirm": {
+      "title": "¿Eliminar Pista?",
+      "message": "¿Estás seguro de que deseas mover esta pista a la papelera? Puedes restaurarla luego dentro de los 30 días.",
+      "cancel": "Cancelar",
+      "delete": "Eliminar"
+    }
+  },
+  "alerts": {
+    "errorPlaying": "Error al reproducir la pista: {error}",
+    "failedRemove": "Error al eliminar la pista",
+    "driveNotSupported": "El escaneo de carpetas de Google Drive no está soportado debido a restricciones de seguridad.\n\nPor favor usa Dropbox para carpetas completas.",
+    "invalidDropbox": "Por favor ingresa una URL válida de Dropbox.\nEjemplo: https://www.dropbox.com/sh/...",
+    "scanError": "Error al escanear la carpeta. Asegúrate de que el enlace sea público y válido.",
+    "failedRestore": "Error al restaurar la pista",
+    "confirmPermanentDelete": "¿Estás seguro de que deseas eliminar permanentemente esta pista? Esto no se puede deshacer.",
+    "failedDelete": "Error al eliminar la pista",
+    "confirmDeleteOld": "¿Estás seguro de que deseas eliminar las pistas con más de 30 días?",
+    "confirmEmptyTrash": "¿Estás seguro de que deseas eliminar permanentemente TODOS los elementos de la papelera?",
+    "failedEmptyTrash": "Error al vaciar la papelera",
+    "scanLocalSuccess": "{message}",
+    "failedScanLocal": "Error al escanear la carpeta local",
+    "fillRequired": "Por favor completa el título y la URL de origen",
+    "errorAdding": "Error al agregar la pista: {error}",
+    "confirmClearPlaylist": "¿Estás seguro de que deseas limpiar toda la lista de reproducción?",
+    "importSuccess": "¡Importación completada!\nAgregadas: {added}\nFallidas: {failed}",
+    "importError": "Error al importar las canciones."
+  }
+}
