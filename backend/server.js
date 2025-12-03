@@ -50,6 +50,14 @@ initDatabase()
 
 // Migration: Move files from legacy ./music to MUSIC_STORAGE_PATH
 const legacyMusicPath = path.join(__dirname, 'music')
+console.log('--- MIGRATION DEBUG ---')
+console.log('__dirname:', __dirname)
+console.log('legacyMusicPath:', legacyMusicPath)
+console.log('MUSIC_STORAGE_PATH:', path.resolve(MUSIC_STORAGE_PATH))
+console.log('Exists legacy?', fs.existsSync(legacyMusicPath))
+console.log('Are paths different?', legacyMusicPath !== path.resolve(MUSIC_STORAGE_PATH))
+console.log('-----------------------')
+
 if (fs.existsSync(legacyMusicPath) && legacyMusicPath !== path.resolve(MUSIC_STORAGE_PATH)) {
   console.log('Checking for legacy music files...')
   try {

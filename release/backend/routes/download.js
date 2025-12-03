@@ -61,7 +61,7 @@ async function extractMetadata(filePath) {
 router.post('/dropbox-file', async (req, res) => {
   try {
     const { url, title, artist } = req.body
-    const storagePath = process.env.MUSIC_STORAGE_PATH || './music'
+    const storagePath = process.env.MUSIC_STORAGE_PATH || MUSIC_PATH
 
     if (!url) {
       return res.status(400).json({ error: 'Missing url parameter' })
